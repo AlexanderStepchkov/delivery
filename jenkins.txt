@@ -1,0 +1,19 @@
+pipeline {
+    agent any 
+    stages {
+        stage('Main') {
+            steps {
+                echo "${version}"
+            }
+        }
+        stage('Final') {
+            steps {
+                script {
+                    def sfera_token = sh(returnStdout: true, script: 'curl -k -X POST --location ${sfera_url}/api/auth/login -H "Accept: application/json" -H "Content-Type: application/json" -d "{ \\"username\\": \\"${sfera_user}\\", \\"password\\": \\"${sfera_pass}\\" }" | grep -oP \'(?<="access_token":")[^"]*\'').trim()
+                    def name = "[Jenkins][${currentBuild.currentResult}] Job ${JOB_BASE_NAME} Run #${BUILD_NUMBER}"
+                    sh(returnStdout: true, script: 'curl -v -k -X PATCH --location "${sfera_url}/app/tasks/api/public/v0.1/entities/${sfera_task}" --http1.1 -H "Authorization: Bearer ' + sfera_token + '" -H "Content-Type: application/json" -d "{\\"externalLinks\\":[{\\"linkTitle\\":\\"' + name + '\\",\\"externalObjectName\\":\\"' + name + '\\",\\"externalSystemRawLink\\": \\"${BUILD_URL}\\", \\"isOwnTitle\\": false,\\"systemPrefix\\":\\"gitlab\\"}]}"')
+                }
+            }
+        }
+    }
+}

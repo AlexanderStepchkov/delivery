@@ -1,0 +1,35 @@
+
+    {
+      "name": "get_from_custom_fields",
+      "taskReferenceName": "get_cfv",
+      "inputParameters": {
+        "customFieldsValues": "${workflow.input.current.customFieldsValues}",
+        "evaluatorType": "javascript",
+        "expression": "function getCustomField(){var res = {}; for(var i=0; i<$.customFieldsValues.length;i++){if($.customFieldsValues[i].code === 'jenkinsBuildVersion') {res.jenkinsBuildVersion = $.customFieldsValues[i].value;} else if($.customFieldsValues[i].code === 'jenkinsJobId') {res.jenkinsJobId = $.customFieldsValues[i].value;}} return res;} getCustomField();"
+      },
+      "type": "INLINE",
+      "startDelay": 0,
+      "optional": false,
+      "asyncComplete": false
+    },
+    {
+      "name": "start_build",
+      "taskReferenceName": "startBuild",
+      "description": "Запуск job в Jenkins",
+      "inputParameters": {
+        "http_request": {
+          "connectionTimeOut": 3000,
+          "method": "POST",
+          "readTimeOut": 3000,
+          "headers": {
+            "Authorization": "Basic ${workflow.variables.jenkinsAuth}"
+          },
+          "contentType": "application/x-www-form-urlencoded",
+          "uri": "${workflow.variables.jenkinsRequestUrl}/job/${get_cfv.output.result.jenkinsJobId}/buildWithParameters?token=${workflow.variables.jenkinsJobToken}&version=${get_cfv.output.result.jenkinsBuildVersion}&sfera_task=${workflow.input.entityNumber}"
+        }
+      },
+      "type": "HTTP",
+      "startDelay": 0,
+      "optional": true,
+      "asyncComplete": false
+    },
